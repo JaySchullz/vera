@@ -1,5 +1,6 @@
 {
   "name": "workspace",
-  "version": "1.0.0",
-  "private": true
+  "private": true,
+  "workspaces": ["api-server"],
+  "packageManager": "pnpm@9"
 }
