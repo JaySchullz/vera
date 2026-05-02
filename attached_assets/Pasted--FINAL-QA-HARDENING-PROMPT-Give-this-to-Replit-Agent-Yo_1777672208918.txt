@@ -1,0 +1,242 @@
+# 🚀 FINAL QA & HARDENING PROMPT (Give this to Replit Agent)
+
+You are performing the **final quality assurance pass** for a production-grade system already in winning-tier state.
+
+⚠️ IMPORTANT:
+
+* DO NOT refactor architecture
+* DO NOT add new features
+* DO NOT change existing working logic
+* ONLY add targeted tests + small validation improvements
+
+Goal: eliminate hidden scoring risks before submission.
+
+---
+
+# 🎯 TASK OBJECTIVE
+
+Improve the judge simulation test suite and validation layers to catch:
+
+* weak message quality (not just structure)
+* poor execution responses
+* non-deterministic outputs
+* incorrect "send vs no-send" decisions
+
+---
+
+# 1️⃣ ADD QUALITATIVE MESSAGE ASSERTIONS
+
+Extend existing tests beyond structural checks.
+
+## Add the following validations for EVERY generated message:
+
+### 1. Trigger grounding check
+
+Ensure message explicitly references trigger context.
+
+Examples:
+
+* perf_dip → must include words like "dropped", "declined", "vs baseline"
+* renewal_due → must include "expires", "days"
+* research_digest → must include "trial", "study", "issue"
+
+```python
+assert any(keyword in body.lower() for keyword in expected_trigger_keywords)
+```
+
+---
+
+### 2. Causal structure detection
+
+Ensure message follows:
+problem → proof → action
+
+Heuristic:
+
+* contains decline/problem word
+* contains number
+* contains action phrase
+
+```python
+assert has_problem and has_number and has_action
+```
+
+---
+
+### 3. Compulsion enforcement
+
+Ensure at least ONE of:
+
+* urgency: "today", "tonight", "days", "deadline"
+* social proof: "nearby", "similar", "peer"
+* loss: "dropped", "lost", "lapsed"
+* reciprocity: "already drafted", "ready in"
+* curiosity: "spotted", "interesting"
+
+```python
+assert any(word in body.lower() for word in compulsion_keywords)
+```
+
+---
+
+### 4. Ban generic phrases
+
+Reject weak content:
+
+```python
+banned = [
+  "boost sales",
+  "improve growth",
+  "let me know",
+  "increase visibility"
+]
+assert not any(b in body.lower() for b in banned)
+```
+
+---
+
+### 5. Merchant grounding
+
+Ensure at least ONE:
+
+* merchant name
+* locality
+* offer
+
+```python
+assert merchant_name in body or locality in body or "₹" in body
+```
+
+---
+
+# 2️⃣ EXECUTION TURN QUALITY TEST
+
+Add tests for `/v1/reply` when user says YES.
+
+### Requirements:
+
+* response must contain a **concrete artifact**
+* must be multi-line or structured
+* must NOT be generic text
+
+```python
+assert len(body.split("\n")) >= 2
+assert "₹" in body or "@" in body or "offer" in body.lower()
+assert len(body) > 80
+```
+
+---
+
+# 3️⃣ STRONGER SPECIFICITY VALIDATION
+
+Current check: has digit ❌ too weak
+
+Upgrade to:
+
+### Accept only if:
+
+* dual number pattern ("X vs Y") OR
+* contextual number (₹, days, %, count tied to context)
+
+```python
+assert (
+  " vs " in body or
+  "₹" in body or
+  "%" in body
+)
+```
+
+---
+
+# 4️⃣ ADD NO-ACTION TEST CASES
+
+Ensure system correctly returns NO actions.
+
+### Case 1: cooldown
+
+```python
+# recent message within 6h
+assert response["actions"] == []
+```
+
+### Case 2: weak trigger
+
+```python
+# only LOW priority trigger
+assert response["actions"] == []
+```
+
+---
+
+# 5️⃣ DETERMINISM TEST
+
+Ensure same input → same output
+
+```python
+resp1 = call_tick(input)
+resp2 = call_tick(input)
+
+assert resp1 == resp2
+```
+
+---
+
+# 6️⃣ EDGE CASE: WEAK CONTEXT FALLBACK
+
+Add test where:
+
+* merchant has no offers
+* minimal metrics
+
+Ensure:
+
+* message still contains number (from peer_stats or trends)
+
+---
+
+# 7️⃣ LATENCY SAFETY CHECK (LIGHT)
+
+Add test to ensure:
+
+* response time < threshold (simulate or measure)
+
+If slow:
+
+* ensure fallback to template without LLM
+
+---
+
+# 8️⃣ DO NOT MODIFY
+
+* core composer logic
+* trigger scoring
+* templates
+
+ONLY improve:
+
+* tests
+* validation checks
+
+---
+
+# ✅ EXPECTED OUTPUT
+
+After implementation:
+
+* test suite expands beyond 287 assertions
+* catches weak/generic outputs
+* ensures execution quality
+* ensures determinism
+* ensures correct no-send decisions
+
+---
+
+# 🏁 FINAL NOTE
+
+This is a **hardening pass**, not a feature build.
+
+Focus on:
+✔ catching hidden failures
+✔ ensuring judge-facing quality
+
+Do not over-engineer.

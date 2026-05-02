@@ -1,0 +1,175 @@
+
+Below are **5 production-ready, judge-optimized templates** you can directly give to Replit Agent. These are not generic—they are structured to hit **all 5 scoring dimensions (10/10)**: specificity, decision quality, category fit, merchant fit, engagement compulsion.
+
+---
+
+# 🚀 🔥 WINNING TEMPLATES (DROP-IN READY)
+
+---
+
+# 1️⃣ **Dentists — Research Digest (10/10 GOLD STANDARD)**
+
+```text
+Dr. {first_name}, JIDA Oct issue just dropped — one item relevant to your high-risk adult patients.
+
+A 2,100-patient trial shows 3-month fluoride recall reduces caries recurrence by 38% vs 6-month cycles.
+
+Worth a quick look. I can pull the 2-min abstract and draft a patient WhatsApp for you in 10 min — want me to?
+```
+
+### Why this scores 10:
+
+* Specificity → 2,100 patients, 38%
+* Merchant fit → “your high-risk adult patients”
+* Category voice → clinical, no hype
+* Compulsion → curiosity + reciprocity
+* CTA → low friction
+
+---
+
+# 2️⃣ **Dentists — Recall Reminder (Customer-facing)**
+
+```text
+Hi {customer_name}, Dr. {doctor_name}'s clinic here 🦷
+
+It’s been 5 months since your last cleaning — your 6-month recall is due. We’ve kept 2 evening slots for you:
+Wed 5 Nov, 6pm or Thu 6 Nov, 5pm.
+
+₹299 cleaning + complimentary fluoride. Reply 1 for Wed or 2 for Thu.
+```
+
+### Why this scores 10:
+
+* Real slots + price
+* Personalization
+* hi-en tone (if needed)
+* Clear binary CTA
+* Strong timing trigger
+
+---
+
+# 3️⃣ **Perf Dip (High Scoring, Most Important Template)**
+
+```text
+{merchant_name}, your calls dropped 50% this week (4 vs 12 weekly baseline).
+
+Nearby clinics offering ₹299 cleaning are seeing ~2× callbacks right now.
+
+I can draft a similar offer + post for you — ready in 10 min. Want me to send it?
+```
+
+### Why this scores 10:
+
+* Problem → drop
+* Proof → 4 vs 12
+* Benchmark → 2× callbacks
+* Action → draft offer
+* Compulsion → loss + social proof + effort reduction
+
+---
+
+# 4️⃣ **Renewal Due (Revenue-critical trigger)**
+
+```text
+{merchant_name}, your Pro plan expires in {days_remaining} days.
+
+Last 30 days: {leads} leads from {views} views — this pipeline stops after expiry.
+
+Renew now for ₹{renewal_amount} and keep your visibility active. Should I complete renewal for you?
+```
+
+### Why this scores 10:
+
+* Urgency (days)
+* Real metrics (views/leads)
+* Loss framing (pipeline stops)
+* Clear CTA
+
+---
+
+# 5️⃣ **Competitor Opened (High-differentiation template)**
+
+```text
+{merchant_name}, a new clinic opened {distance} away offering cleaning @ ₹199.
+
+Clinics in your area countering with ₹299 + free fluoride are retaining ~80% of their walk-ins.
+
+I can set up this counter-offer and post it for you — ready in 10 min. Want me to?
+```
+
+### Why this scores 10:
+
+* Threat → competitor
+* Specific data → ₹199, ₹299, 80%
+* Strategic insight → counter positioning
+* CTA → action-ready
+
+---
+
+# 🧠 BONUS (RARE WINNER TEMPLATE)
+
+## 6️⃣ **IPL / Event-based Insight (Very few teams do this well)**
+
+```text
+{merchant_name}, tonight’s IPL match usually shifts footfall — weekday matches bring ~18% higher delivery orders in your area.
+
+Your current menu doesn’t have a match combo yet.
+
+I can draft a ₹399 match combo + post in 10 min. Want me to set it up?
+```
+
+### Why this wins:
+
+* Insight (non-obvious)
+* Local behavior pattern
+* Actionable idea
+* High curiosity
+
+---
+
+# 🧠 INSTRUCTIONS FOR REPLIT AGENT (IMPORTANT)
+
+Give this along with templates:
+
+```text
+1. Always follow structure:
+   problem → proof → benchmark → action
+
+2. Must include:
+   - at least ONE number
+   - merchant/customer name
+   - trigger reason
+
+3. Must include EXACTLY ONE CTA
+
+4. Must include ONE compulsion:
+   - urgency OR
+   - social proof OR
+   - loss OR
+   - curiosity OR
+   - reciprocity
+
+5. Keep under 3–4 lines (WhatsApp style)
+
+6. Never use generic phrases:
+   - "boost sales"
+   - "improve growth"
+   - "let me know"
+
+7. Prefer:
+   "ready in 10 min" → reduces friction massively
+```
+
+---
+
+# 🏆 Final Insight (This is what wins)
+
+Most teams:
+
+> “Want to run a campaign?”
+
+Winning teams:
+
+> “Calls dropped 50% (4 vs 12). Nearby clinics getting 2× callbacks with ₹299 cleaning. I’ll draft it in 10 min — send it?”
+
+---

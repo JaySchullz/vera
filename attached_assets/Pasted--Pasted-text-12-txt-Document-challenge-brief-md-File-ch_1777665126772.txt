@@ -1,0 +1,1108 @@
+
+
+Pasted text(12).txt
+Document
+
+challenge-brief.md
+File
+
+challenge-testing-brief.md
+File
+
+engagement-design.md
+File
+
+engagement-research.md
+File
+
+judge_simulator.py
+Python
+
+customers_seed.json
+File
+
+generate_dataset.py
+Python
+
+merchants_seed.json
+File
+
+triggers_seed.json
+File
+
+dentists.json
+File
+
+gyms.json
+File
+
+pharmacies.json
+File
+
+restaurants.json
+File
+
+salons.json
+File
+
+api-call-examples.md
+File
+
+case-studies.md
+File
+I am taking part in India’s Biggest AI Challenge, help me out like an **production level full stack developer with years of experience in SWE** with experience in winning national level hackathon and product building challenges, here is the project context:
+
+here is what given on submission page:
+Step 1
+
+Download and review
+Download the challenge zip, run the dataset generator, and understand the context structure. (all files attached)
+
+Step 1
+
+Download and review
+Download the challenge zip, run the dataset generator, and understand the context structure.
+
+Download challenge zip
+Step 2
+
+Build one strong flow
+Start small and deterministic: handle trigger, merchant, and category context correctly.
+
+Step 3
+
+Submit your bot endpoint
+Share one public base URL (example: https://mybot.example.com) and ensure these are live:
+
+POST /v1/context
+POST /v1/tick
+POST /v1/reply
+GET /v1/healthz
+GET /v1/metadata
+
+I’m pulling the contract details from the challenge files so I can turn this into an implementation plan that matches the judge exactly.
+
+I’ve got the core contract now: this is a stateful, deterministic composer with five HTTP endpoints, and the judge cares about decision quality much more than flashy writing. I’m turning that into a build plan you can ship.
+
+Thought for 20s
+Treat this as a stateful deterministic message engine, not an “LLM chat app.” The challenge brief says the bot must compose from four inputs — category, merchant, trigger, and optional customer — and return the next message, CTA, send-as identity, suppression key, and rationale. The testing brief also makes it clear the judge will push context over time and expects your bot to keep state across turns, while scoring decision quality, specificity, category fit, merchant fit, and engagement compulsion.
+
+Build this in three layers. First, a context store that accepts /v1/context idempotently by (context_id, version) and keeps the latest category/merchant/customer/trigger snapshot alive for the whole test. Second, a conversation store keyed by conversation_id so /v1/reply can continue the exact thread. Third, a composer/router that chooses one trigger as the primary reason to send, then renders a message with category voice, merchant facts, and a single low-friction CTA. That matches the judge harness contract and the endpoint surface it validates.
+
+Your strongest implementation pattern is: normalize → rank → compose → dedupe. Normalize each incoming context into a common internal schema. Rank possible triggers by urgency, recency, merchant fit, and suppression status. Compose with deterministic templates per trigger.kind first, then fill with merchant facts and category voice. Finally, suppress repeats using the provided suppression_key plus your own conversation-level dedupe so you do not spam the same merchant or customer. The design brief explicitly says the old system is fragmented and that a shared 4-context composition framework is the point of the rewrite.
+
+For scoring, optimize in this order: specificity, then relevance, then compulsion. The brief repeatedly rewards real numbers, dates, local facts, and source anchors, and punishes generic messages. Use one merchant metric, one trigger fact, and one concrete offer or date in almost every send. For dentists, the category voice allows clinical terms and prefers service-plus-price patterns such as “Dental Cleaning @ ₹299” over vague discount language; the same pattern exists across other categories like salons, gyms, restaurants, and pharmacies.
+
+The best “first strong flow” is usually dentists + research digest or dentists + recall reminder, because the dataset gives very clean merchant signals, offers, and trigger payloads. The case-study file shows what a perfect message looks like: a source-cited hook, a merchant-specific anchor like high-risk adult patients, one clear CTA, and no hype. That is the exact shape you should replicate in code.
+
+A production-grade MVP stack for this challenge is simple: FastAPI, Pydantic models, Redis or SQLite for state, and a rule-first composer with a small template library. Do not start with a free-form prompt that tries to “understand everything.” Start with deterministic branching on trigger.kind, then make the body smarter with merchant facts and category voice. Run the local judge_simulator.py early, because the harness is deterministic and the challenge includes 30 canonical test pairs with a 30s timeout.
+
+What I would ship first:
+
+/v1/healthz and /v1/metadata returning clean static diagnostics.
+
+/v1/context with versioned upserts.
+
+A compose() function with a small trigger router.
+
+/v1/tick that emits only when a trigger is active and not suppressed.
+
+/v1/reply that continues the conversation statefully and can convert a reply into the next best action.
+
+Next I can draft the actual FastAPI project skeleton + composer code structure for you in a production-ready way.
+
+
+I am going to use openai codex, give the ultimate building prompt and plan (or prompt to plan this properly and execute this) with context, and should i be attaching all the files for context?
+
+Short answer: yes, include the files—but not blindly. And don’t just ask Codex to “build the bot.” You need to constrain it like a production system with a deterministic contract, otherwise it will overfit to LLM-style generation and fail the judge.
+
+I’ll give you:
+
+Exact strategy (what to give Codex vs what NOT)
+
+Production-grade execution plan
+
+Ultimate Codex prompt (copy-paste ready)
+
+Common failure modes (this is where most teams lose)
+
+🔥 1. Should you attach all files?
+❌ Don’t dump everything raw
+If you attach everything blindly:
+
+Codex will hallucinate relationships
+
+Miss deterministic requirements
+
+Ignore suppression logic
+
+Over-focus on text generation
+
+✅ Instead, give structured context
+You should provide:
+
+MUST INCLUDE
+challenge-brief.md → problem definition + scoring
+
+challenge-testing-brief.md → API contract (CRITICAL)
+
+judge_simulator.py → ground truth behavior
+
+1–2 sample files from each:
+
+merchant
+
+trigger
+
+customer
+
+category
+
+OPTIONAL (summarized)
+engagement-design.md → summarize key idea (4-context composition)
+
+engagement-research.md → ignore deep infra
+
+DO NOT INCLUDE FULL DATASET
+Instead say:
+
+“Dataset follows same schema as samples”
+
+🧠 2. Correct Mental Model (THIS WINS HACKATHONS)
+Most people build:
+
+❌ LLM chatbot
+
+You must build:
+
+✅ Deterministic decision engine + templated composer
+
+From brief:
+
+Judge scores decision, not creativity 
+
+
+Generic = penalized
+
+One CTA only
+
+Must use real data
+
+⚙️ 3. Production Architecture (Codex should follow this)
+Core Modules
+app/
+ ├── main.py (FastAPI)
+ ├── routes/
+ │    ├── context.py
+ │    ├── tick.py
+ │    ├── reply.py
+ │    ├── health.py
+ │    ├── metadata.py
+ │
+ ├── core/
+ │    ├── store.py              # context store (in-memory/redis)
+ │    ├── composer.py           # main logic
+ │    ├── trigger_router.py     # decision engine
+ │    ├── templates/
+ │    │     ├── dentists.py
+ │    │     ├── salons.py
+ │    │     └── ...
+ │    ├── suppression.py
+ │    ├── ranking.py
+ │
+ ├── models/
+ │    ├── context_models.py
+ │    ├── api_models.py
+ │
+ └── utils/
+      ├── time.py
+      ├── formatting.py
+🧩 4. Deterministic Compose Function (CORE)
+def compose(category, merchant, trigger, customer=None):
+    # 1. Choose PRIMARY SIGNAL (most important)
+    signal = select_signal(trigger, merchant)
+
+    # 2. Extract facts (NO hallucination)
+    facts = extract_facts(category, merchant, trigger, customer)
+
+    # 3. Select template based on trigger.kind
+    template = get_template(trigger.kind, category.slug)
+
+    # 4. Fill template deterministically
+    message = template.render(facts)
+
+    # 5. Build CTA (exactly one)
+    cta = build_cta(trigger.kind, facts)
+
+    # 6. Suppression key
+    suppression_key = trigger.suppression_key
+
+    return {
+        "body": message,
+        "cta": cta,
+        "send_as": resolve_identity(trigger),
+        "suppression_key": suppression_key,
+        "rationale": explain_decision(signal, facts)
+    }
+🧠 5. Ultimate Codex Prompt (COPY THIS)
+Paste this into Codex (with files attached selectively):
+
+🚀 PROMPT
+You are a senior staff-level backend engineer and hackathon winner.
+
+Build a production-grade AI system for the Magicpin Vera Challenge.
+
+🧠 SYSTEM GOAL
+Build a deterministic message composition engine:
+
+compose(category, merchant, trigger, customer?) → action
+
+This system will be evaluated by an automated judge.
+
+The judge scores:
+
+Decision quality
+
+Specificity
+
+Category fit
+
+Merchant fit
+
+Engagement compulsion
+
+⚠️ HARD REQUIREMENTS
+MUST be deterministic
+
+MUST NOT hallucinate data
+
+MUST use only given context
+
+MUST produce exactly ONE CTA
+
+MUST use real numbers, offers, or facts from context
+
+MUST respect suppression_key
+
+MUST be stateful across requests
+
+🏗️ BUILD REQUIREMENTS
+Implement a FastAPI server with endpoints:
+
+GET /v1/healthz
+
+GET /v1/metadata
+
+POST /v1/context
+
+POST /v1/tick
+
+POST /v1/reply
+
+Follow exact contract from provided testing brief.
+
+🧱 ARCHITECTURE
+Design system with:
+
+Context Store
+
+Stores category, merchant, trigger, customer
+
+Version-aware updates
+
+Idempotent
+
+Trigger Router
+
+Select best trigger from available_triggers
+
+Rank by:
+
+urgency
+
+merchant signals
+
+recency
+
+suppression
+
+Composer Engine
+
+No free-form generation
+
+Use deterministic templates
+
+Use category voice
+
+Inject merchant-specific facts
+
+Suppression Engine
+
+Prevent duplicate sends
+
+Respect suppression_key
+
+Conversation State
+
+Maintain conversation_id mapping
+
+Continue flows correctly in /reply
+
+🎯 TEMPLATE STRATEGY
+Create template functions per trigger type:
+
+research_digest
+
+recall_due
+
+perf_dip
+
+renewal_due
+
+festival
+
+Each template must:
+
+Use real data
+
+Be concise
+
+Include exactly one CTA
+
+Match category tone
+
+📊 DECISION STRATEGY
+When composing:
+
+Choose ONE dominant signal
+
+Do NOT combine multiple weak signals
+
+Prefer:
+
+strong trigger + merchant signal
+
+real numbers (₹, %, dates)
+
+local context
+
+📦 OUTPUT FORMAT
+Each action must return:
+
+{
+"conversation_id": "...",
+"merchant_id": "...",
+"customer_id": "...",
+"send_as": "vera" | "merchant_on_behalf",
+"trigger_id": "...",
+"body": "...",
+"cta": "...",
+"suppression_key": "...",
+"rationale": "explain reasoning"
+}
+
+🚫 AVOID
+Generic messages
+
+Multiple CTAs
+
+Vague phrases ("boost sales", "improve growth")
+
+Fake numbers
+
+Overuse of LLM text generation
+
+🧪 TESTING
+Ensure compatibility with judge_simulator.py
+
+System must:
+
+Pass all endpoint checks
+
+Stay deterministic across runs
+
+🎯 DELIVERABLE
+Return:
+
+Full FastAPI project
+
+Clean modular structure
+
+Working compose() implementation
+
+At least 3 strong templates
+
+Clear comments
+
+⚠️ 6. Where Most People FAIL
+❌ Mistake 1: Using LLM for everything
+→ You lose determinism → fail judge
+
+❌ Mistake 2: Combining too many signals
+→ Low decision score
+
+❌ Mistake 3: Generic CTA
+→ Engagement score drops hard
+
+❌ Mistake 4: Ignoring merchant context
+→ Merchant fit score tanks
+
+🧠 Final Advice (Hackathon Meta)
+Winning strategy:
+
+Start narrow → win one flow perfectly → expand
+
+Best first flow:
+
+dentists + research_digest
+
+dentists + recall_due
+
+Because:
+
+clean data
+
+strong examples
+
+high scoring potential
+
+🚀 If you want next step
+I can:
+
+Review Codex output like a senior SWE (brutal critique)
+
+Give you top 5 high-scoring templates
+
+Help you beat judge_simulator scoring
+
+Just say: “review my implementation”
+
+
+give the final ultra detailed prompt for codex in raw markdown format text like a senior swe
+
+Vera Ai Challenge – Codex Build Prompt
+
+🚀 Magicpin Vera AI Challenge — Ultra-Detailed Codex Build Prompt (Senior SWE Version)
+🧠 ROLE
+You are a Staff-level Backend Engineer + Systems Designer with experience building production-grade, high-reliability systems and winning national-level hackathons.
+
+You are NOT building a chatbot. You are building a deterministic decision engine with strict API contracts and scoring constraints.
+
+🎯 OBJECTIVE
+Build a production-grade system that implements:
+
+compose(category, merchant, trigger, customer?) -> action
+This system powers Vera — an AI assistant for merchant growth.
+
+The evaluation is done by an automated judge that scores:
+
+Decision quality
+
+Specificity
+
+Category fit
+
+Merchant fit
+
+Engagement compulsion
+
+Your implementation must optimize for these scores — NOT for creativity.
+
+⚠️ NON-NEGOTIABLE CONSTRAINTS
+Deterministic Output
+
+Same input MUST produce same output
+
+No randomness, no temperature-based LLM generation
+
+No Hallucination
+
+Use ONLY values present in context
+
+Never invent numbers, offers, or facts
+
+Single Clear CTA
+
+Exactly ONE action per message
+
+Must be low-friction (yes/no or single choice)
+
+Context Grounding
+
+Must combine: trigger + merchant + category
+
+Customer context when available
+
+Suppression Handling
+
+Respect suppression_key
+
+Avoid duplicate sends
+
+Stateful System
+
+Must persist context across requests
+
+Must maintain conversation state
+
+🏗️ SYSTEM ARCHITECTURE
+Core Modules
+app/
+ ├── main.py                  # FastAPI entrypoint
+ ├── routes/
+ │    ├── context.py         # POST /v1/context
+ │    ├── tick.py            # POST /v1/tick
+ │    ├── reply.py           # POST /v1/reply
+ │    ├── health.py          # GET /v1/healthz
+ │    ├── metadata.py        # GET /v1/metadata
+ │
+ ├── core/
+ │    ├── store.py           # Context store (idempotent, versioned)
+ │    ├── composer.py        # Core compose() logic
+ │    ├── trigger_router.py  # Select best trigger
+ │    ├── ranking.py         # Scoring + prioritization
+ │    ├── suppression.py     # Dedup logic
+ │    ├── conversation.py    # Conversation state
+ │    ├── templates/
+ │    │     ├── dentists.py
+ │    │     ├── salons.py
+ │    │     ├── gyms.py
+ │    │     ├── restaurants.py
+ │    │     └── pharmacies.py
+ │
+ ├── models/
+ │    ├── api_models.py
+ │    ├── context_models.py
+ │
+ └── utils/
+      ├── formatting.py
+      ├── time.py
+📦 API CONTRACT (STRICT)
+Endpoints to Implement
+GET /v1/healthz
+
+GET /v1/metadata
+
+POST /v1/context
+
+POST /v1/tick
+
+POST /v1/reply
+
+Requirements
+/v1/context
+Idempotent by (context_id, version)
+
+Replace older versions atomically
+
+Persist in memory (or Redis)
+
+/v1/tick
+Called periodically
+
+Must decide whether to send actions
+
+Return list of actions (can be empty)
+
+/v1/reply
+Continue conversation
+
+Must respond synchronously
+
+Must maintain conversation context
+
+🧠 CORE LOGIC — COMPOSER
+def compose(category, merchant, trigger, customer=None):
+    # Step 1: Select dominant signal
+    signal = select_primary_signal(trigger, merchant)
+
+    # Step 2: Extract grounded facts
+    facts = extract_facts(category, merchant, trigger, customer)
+
+    # Step 3: Select template
+    template = get_template(trigger.kind, category.slug)
+
+    # Step 4: Render message deterministically
+    message = template.render(facts)
+
+    # Step 5: Build CTA (exactly one)
+    cta = build_cta(trigger.kind, facts)
+
+    # Step 6: Assign identity
+    send_as = resolve_sender(trigger, customer)
+
+    return {
+        "body": message,
+        "cta": cta,
+        "send_as": send_as,
+        "suppression_key": trigger.suppression_key,
+        "rationale": explain_decision(signal, facts)
+    }
+🧩 TRIGGER ROUTING STRATEGY
+Rank triggers using:
+
+urgency
+
+recency
+
+merchant signals (e.g., perf dip, stale posts)
+
+customer state (if applicable)
+
+suppression eligibility
+
+Choose ONLY ONE trigger per tick.
+
+Avoid combining multiple weak signals.
+
+🎯 TEMPLATE STRATEGY
+Implement deterministic templates for:
+
+1. research_digest
+Include source
+
+Include real numbers
+
+Tie to merchant cohort
+
+2. recall_due (customer-facing)
+Include name
+
+Include real slots
+
+Include price/offer
+
+Multi-choice CTA allowed but simple
+
+3. perf_dip
+Show metric drop
+
+Suggest ONE corrective action
+
+4. renewal_due
+Mention days remaining
+
+Mention plan + price
+
+5. festival
+Tie to category relevance
+
+Suggest offer from catalog
+
+🧠 MESSAGE DESIGN RULES
+Each message MUST:
+
+Use at least ONE real number (₹, %, date, count)
+
+Reference ONE merchant-specific fact
+
+Reference ONE trigger-specific reason
+
+Be under ~3–4 lines
+
+Have exactly ONE CTA
+
+📊 DECISION QUALITY HEURISTIC
+Strong message =
+
+trigger_signal + merchant_signal + category_fit + one_action
+
+Weak message =
+
+multiple_signals + generic_text + vague CTA
+
+🧠 CATEGORY VOICE ENFORCEMENT
+Dentists → clinical, precise, no hype
+
+Salons → warm, visual, trend-driven
+
+Gyms → energetic, performance-driven
+
+Restaurants → operational, footfall-driven
+
+Pharmacies → precise, trustworthy
+
+Never violate taboo vocabulary.
+
+🧪 TESTING STRATEGY
+System must pass:
+
+Endpoint validation
+
+Deterministic output
+
+Judge scoring simulation
+
+Use provided judge_simulator.py
+
+🚫 DO NOT DO
+Do NOT use LLM for full message generation
+
+Do NOT generate random variations
+
+Do NOT include multiple CTAs
+
+Do NOT use vague phrases
+
+🏁 DELIVERABLE
+Return:
+
+Full FastAPI project
+
+Modular architecture
+
+Deterministic composer
+
+Trigger router
+
+At least 5 strong templates
+
+Working endpoints
+
+🧠 ENGINEERING EXPECTATIONS
+Clean code
+
+Type safety
+
+Clear separation of concerns
+
+No unnecessary abstractions
+
+Production-ready structure
+
+🎯 EXECUTION PRIORITY
+Get endpoints working
+
+Implement context store
+
+Implement ONE strong flow (dentists + research_digest)
+
+Validate with judge simulator
+
+Expand templates
+
+🚀 SUCCESS CRITERIA
+High specificity (real data)
+
+High decision quality (correct trigger usage)
+
+High engagement (clear CTA)
+
+Build this like a production system, not a demo.
+
+I’ve created your final ultra-detailed Codex build prompt in the canvas (right side).
+
+This is not just a prompt—it’s structured like a staff engineer design doc + execution spec, which is exactly how you get Codex to produce high-quality, production-ready output instead of generic code.
+
+What you should do next:
+Attach only key files (brief + testing + 1–2 samples per context)
+
+Paste this prompt into Codex
+
+Let it generate the base system
+
+Then come back and say:
+“review my implementation” → I’ll critique it like a judge
+
+If you want, I can next:
+
+Add winning-level templates (50/50 score)
+
+Or help you design a trigger ranking algorithm that beats most teams
+
+
+The task
+
+Build the message engine behind Vera.
+
+What Vera is
+Vera is magicpin's AI assistant for merchant growth. It helps merchants improve listings, run campaigns, and reply faster.
+
+What you build
+Build a deterministic compose(category, merchant, trigger, customer?) function. It should return the next message, CTA, send-as identity, suppression key, and rationale.
+
+What strong entries do
+Use merchant context to decide what Vera should say next. Make every message specific, useful, and easy to reply to.
+
+01
+Category
+The right tone, offer patterns, seasonal moments, and what to avoid.
+
+02
+Merchant
+Business identity, performance signals, live offers, and conversation history.
+
+03
+Trigger
+Why this message should go now: recall, spike, dip, research, or festival.
+
+04
+Customer
+Optional context for direct outreach: relationship, consent, status, and preference.
+
+How scoring works
+
+Our AI scores decisions, not just writing style.
+Each dimension is scored from 0–10 (10 = highest score).
+
+judge_simulator v1.0.0
+·
+30 canonical test pairs
+·
+30s timeout
+·
+20 actions/tick
+Each scored out of 10
+
+/10
+Decision quality
+Can your bot pick the best signal for this moment? Great outputs combine trigger + merchant state + category fit before writing.
+
+/10
+Specificity
+Use real numbers, offers, dates, and local facts from the given input.
+
+/10
+Category fit
+Keep tone true to the business type: clinical, visual, timely, or utility-first.
+
+/10
+Merchant fit
+Personalize to merchant metrics, offer catalog, and prior conversation behavior.
+
+/10
+Engagement compulsion
+Give one strong reason to reply now with a low-effort next action.
+
+Judge simulator (official local harness)
+This package includes the LLM-powered judge as judge_simulator.py.
+
+Validates endpoint behavior: /healthz, /metadata, /context, /tick, /reply
+Before running, open judge_simulator.py and set LLM_PROVIDER, LLM_API_KEY, and BOT_URL
+Runs one deterministic judge pass for your submitted bot URL
+Scores quality across all five rubric dimensions
+Prints the complete output in a single run
+Run judge simulator (after setting LLM API key)
+
+python judge_simulator.py
+Your output should stay deterministic for the same input and simulator settings.
+
+Decision quality
+Strong bots do not repeat every available fact. They choose the one signal that should drive the next message.
+
+Engagement
+Engagement means the merchant is likely to reply, not just read. Keep asks short and low-friction, with one clear next step.
+
+Bold high-compulsion messaging
+Bold does not mean hype. It means a sharp hook from real context, without invented claims.
+
+Generic messages lose
+Generic copy gets penalized. Grounded copy with real merchant facts scores better.
+
+Message craft
+
+What a strong message looks like.
+Generic
+Hi Doctor, want to run a discount campaign today to increase sales?
+
+No trigger
+No merchant fact
+No category voice
+High compulsion
+190 people in your locality are searching for "Dental Check Up". Should I send them a discounted check up at ₹299?
+
+Specific benchmark
+Real offer
+Single CTA
+Levers that work
+Use proof, urgency, curiosity, and one simple yes/no action.
+
+Hard constraints
+Respect the session rules: one clear CTA per send, no fake claims.
+
+What judges change
+After submission, judges inject new digest items, metric shifts, triggers, and customer contexts.
+
+Dataset
+
+Every team starts from the same base data.
+$ tree magicpin-ai-challenge/
+magicpin-ai-challenge/
+├── challenge-brief.md
+├── challenge-testing-brief.md
+├── engagement-design.md
+├── engagement-research.md
+├── dataset/
+│ ├── categories/ # 5 verticals: dentists, salons, restaurants, gyms, pharmacies
+│ ├── merchants_seed.json # 10 seeds → expanded to 50 merchants
+│ ├── customers_seed.json # 15 seeds → expanded to 200 customers
+│ ├── triggers_seed.json # 25 seeds → expanded to 100 triggers
+│ └── generate_dataset.py # deterministic expansion + 30 canonical test pairs
+└── examples/
+├── api-call-examples.md
+└── case-studies.md # 10 judge-scored anchors
+
+$ python3 dataset/generate_dataset.py --seed-dir dataset --out expanded
+
+→ expanded/ · 50 merchants · 200 customers · 100 triggers · 30 test pairs
+What you submit
+Submit a public bot URL. A one-page README.md can explain approach, model choice, and tradeoffs.
+
+Testing setup
+
+Submit one public bot URL for evaluation.
+magicpin's harness calls your URL, sends context, simulates replies, and scores each output. Your bot should stay stateful, fast, and grounded in received context.
+
+POST /v1/context
+POST /v1/tick
+POST /v1/reply
+GET /v1/healthz
+GET /v1/metadata
+
+Push merchant context (idempotent by scope + version)
+$ curl -sS https://your-bot.example/v1/context
+-H "Content-Type: application/json"
+-d '{
+"scope": "merchant",
+"context_id": "m_001_drmeera",
+"version": 3,
+"payload": { "identity": {...}, "performance": {...}, "offers": [...] },
+"delivered_at": "2026-04-29T10:00:00Z"
+}'
+
+Response — 200 OK
+{ "accepted": true, "ack_id": "ack_abc123", "stored_at": "2026-04-29T10:00:00.123Z" }
+
+Re-posting the same version is a no-op. Higher version replaces atomically.
+01
+Warmup
+Health and metadata checks, then base context load: categories, merchants, customers.
+
+02
+Test window
+60 simulated minutes. Every 5 minutes, the judge pushes updates and calls /v1/tick.
+
+03
+Adaptive injection
+Fresh digest items, metric shifts, new triggers, and surprise customer scopes arrive mid-test.
+
+04
+Replay test
+Top 10 bots face auto-replies, intent transitions, and hostile/off-topic scenarios.
+
+05
+Score report
+Teams receive message scores, logs, transcripts, timeline, and judge rationale.
+
+Timeout
+Max response timeout: 30 seconds
+Rate
+10 requests/sec from judge
+Payload
+500 KB context cap
+Tick cap
+20 actions per tick
+Deployment options
+Host the bot on any cloud provider. The submitted public URL must expose all required endpoints.
+
+Local self-test
+Before submission, run endpoint checks locally using the Judge Simulator and the sample API calls in examples/api-call-examples.md to validate payload handling, response shape, and timeout behavior.
+
+Starter package
+
+Everything you need to start building fast.
+The zip includes the brief, test contract, dataset generator, API examples, and scored case studies. It matches the package used by the judge harness.
+
+Download challenge zip
+Dataset seeds
+5 categories + base seeds
+Category contexts plus seed files for merchants, customers, and triggers.
+
+Generator
+Deterministic expansion
+generate_dataset.py expands seeds to 50 merchants, 200 customers, 100 triggers, and 30 canonical test pairs.
+
+Examples
+API + scoring references
+Request/response examples and 10 case studies with inputs, outputs, and scorecards.
+
+Run this after extraction
+All teams use the same seed and get the same expanded base dataset.
+
+python3 dataset/generate_dataset.py --seed-dir dataset --out expanded
+How submission works
+01
+Build the composer
+Implement deterministic message composition from structured JSON context.
+
+02
+Share your bot URL
+Submit a hosted URL where the judge can call the required API endpoints.
+
+03
+Handle new context
+Judges inject fresh facts after submission to test adaptability and grounding.
+
+04
+Pass replay scenarios
+Top bots are replay-tested on replies, objections, auto-replies, and intent handoffs.
+
+Apply now
+
+Start your challenge journey in 4 steps.
+No long process. Build something real, show your thinking, and submit.
+
+Start journey
+Step 1
+Download the challenge pack
+Get the starter zip and review the context format.
+
+Step 2
+Build a working message engine
+Start with one clear end-to-end flow.
+
+Step 3
+Set your public bot URL
+Submit one public base URL (example: https://mybot.example.com). Judge will call POST /v1/context, POST /v1/tick, POST /v1/reply, GET /v1/healthz, and GET /v1/metadata.
+
+Step 4
+Submit your final entry
+Share your details and keep your bot live for evaluation.
+
+Frequently Asked Questions (FAQ)
+
+Straight answers before you submit.
+This challenge is a direct quality filter: sharp reasoning, strong product judgment, and reliable execution.
+
+The simulator is an anchor. The exam is fresh scenarios.
+The local judge_simulator gives you a deterministic dry-run on the 30 canonical test pairs. The actual judge harness uses the same scoring logic but injects new facts you haven't seen — fresh digest items, performance shifts, surprise customer scopes, replies you can't predict. Your score depends on how your bot handles those, not on how it does on the 30 pairs. Bots that pattern-match the simulator will fail. Bots that ground every output in the context they've actually been given will not.
+
+What we actually care about
+Signal quality. If your decisions are grounded, deterministic, and useful for merchants, we notice.
+
+What the prize really is
+A full-time offer — or an internship that converts into a full-time offer. Top candidates join the team; strong performance turns it into a permanent role.
+
+How hard is the challenge?
+Building the bot is easy. Building one a merchant actually wants to engage with is the hard part — that's the filter.
+
+02 May 2026, 11:59 PM IST — submission closes. Keep your bot live and reachable for the next ~3 days while the judge harness runs scoring on fresh scenarios. Selected candidates hear from us by 5 May 2026.
+
+Same scoring logic, different inputs. The judge_simulator runs locally and evaluates against the 30 canonical test pairs you can see. The judge harness — the real evaluation — uses the same scoring code but injects fresh scenarios you haven't seen. The simulator is for development confidence. The harness is for the score.
+
+Solo applications only. Students and working professionals are both welcome. The full-time role is based out of our Gurgaon office. Before the final offer, we'll verify that you actually did the work yourself.
+
+No hard cap. Write the message length that best fits the context. Include links only when they add real value for the merchant.
+
+No. We judge the output quality and reasoning quality, not years of experience.
+
+Yes, but each submission is judged on quality. More submissions do not help if the core logic is weak.
+
+Hallucinated facts, generic templates, unstable responses, and broken endpoint behavior.
+
+Specific merchant-aware messaging, sharp decision logic, and consistent behavior across judge scenarios.
+
+
+
+
+Close
