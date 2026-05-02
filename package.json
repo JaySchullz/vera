@@ -2,5 +2,5 @@
   "name": "workspace",
   "private": true,
   "workspaces": ["api-server"],
-  "packageManager": "pnpm@9"
+  "packageManager": "pnpm@9.15.9"
 }
